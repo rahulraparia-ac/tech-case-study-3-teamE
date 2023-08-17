@@ -5,6 +5,7 @@ import com.acuver.teamE.customerDetails.entity.Customer;
 import com.acuver.teamE.customerDetails.entity.response.CustomerResponse;
 import com.acuver.teamE.customerDetails.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +33,7 @@ public class CustomerController {
         return customerService.getAllCustomers(pageNo,pageSize,sortBy,sortDir);
     }
 
+    @Cacheable(value = "customers", key = "#id")
     @GetMapping("/{id}")
     public ResponseEntity<Customer> getCustomerById(@PathVariable(name = "id") String id) {
         return ResponseEntity.status(HttpStatus.FOUND).body(customerService.getCustomerById(id));
