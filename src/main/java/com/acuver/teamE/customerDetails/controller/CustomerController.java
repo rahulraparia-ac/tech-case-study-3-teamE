@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("api/v1/customers")
 public class CustomerController {
@@ -33,10 +35,27 @@ public class CustomerController {
         return customerService.getAllCustomers(pageNo,pageSize,sortBy,sortDir);
     }
 
-    @Cacheable(value = "customers", key = "#id")
-    @GetMapping("/{id}")
-    public ResponseEntity<Customer> getCustomerById(@PathVariable(name = "id") String id) {
-        return ResponseEntity.status(HttpStatus.FOUND).body(customerService.getCustomerById(id));
+//    @Cacheable(value = "customers", key = "#id")
+//    @GetMapping("/{id}")
+//    public ResponseEntity<Customer> getCustomerById(@PathVariable(name = "id") String id) {
+//        return ResponseEntity.status(HttpStatus.FOUND).body(customerService.getCustomerById(id));
+//    }
+    @GetMapping("/field")
+    public ResponseEntity<List<Customer>> getCustomers(
+            @RequestParam(required = false) String id,
+            @RequestParam(required = false) Integer age,
+            @RequestParam(required = false) Integer minAge,
+            @RequestParam(required = false) Integer maxAge,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String gender){
+
+        List<Customer> customers = customerService.getCustomers(id, age, minAge, maxAge, email, gender);
+
+        if (customers == null){
+            return ResponseEntity.notFound().build();
+        }else {
+            return ResponseEntity.ok(customers);
+        }
     }
 
     @PutMapping("/{id}")
