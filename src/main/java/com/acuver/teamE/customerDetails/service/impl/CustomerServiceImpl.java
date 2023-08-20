@@ -5,6 +5,10 @@ import com.acuver.teamE.customerDetails.entity.response.CustomerResponse;
 import com.acuver.teamE.customerDetails.repository.CustomerRepository;
 import com.acuver.teamE.customerDetails.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +19,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
+@CacheConfig(cacheNames = {"Customer"})
 public class CustomerServiceImpl implements CustomerService {
 
     @Autowired
@@ -54,12 +59,14 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    @Cacheable(key = "#id")
     public Customer getCustomerById(String id) {
         Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
         return fetchedCustomer;
     }
 
     @Override
+    @CachePut(key = "#id")
     public Customer updateCustomerById(Customer customer, String id) {
         Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
 
@@ -75,6 +82,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    @CacheEvict(key = "#id")
     public void deleteCustomerById(String id) {
         Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
         customerRepository.delete(fetchedCustomer);
