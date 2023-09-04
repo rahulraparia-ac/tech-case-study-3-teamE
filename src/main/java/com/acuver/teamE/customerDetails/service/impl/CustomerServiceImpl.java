@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -43,7 +44,9 @@ public class CustomerServiceImpl implements CustomerService {
     public Customer saveCustomer(Customer customer) {
         customer.setId(UUID.randomUUID().toString());
         redisTemplate.boundValueOps(customer.getId()).set(customer);
+        log.info("the customer with id: {} is saved in cache : {} ",customer.getId(),WRITE_BACK_CACHE_KEY);
         redisTemplate.boundSetOps(WRITE_BACK_CACHE_KEY).add(customer);
+        log.info("the customer id: {} is saved to cache",customer.getId());
         return customer;
     }
 
@@ -91,7 +94,16 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Customer updateCustomerById(Customer customer, String id) {
-        Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
+        final var customerOnCache = redisTemplate.boundValueOps(id).get();
+        Customer fetchedCustomer=null;
+        if (customerOnCache != null) {
+            log.info("Customer with id:{} is found in cache",id);
+            fetchedCustomer=customerOnCache;
+            redisTemplate.boundSetOps(WRITE_BACK_CACHE_KEY).remove(fetchedCustomer);
+        }
+        else{
+            fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
+        }
 
         fetchedCustomer.setFirstName(customer.getFirstName() == null ? fetchedCustomer.getFirstName() : customer.getFirstName());
         fetchedCustomer.setLastName(customer.getLastName() == null ? fetchedCustomer.getLastName() : customer.getLastName());
@@ -100,14 +112,31 @@ public class CustomerServiceImpl implements CustomerService {
         fetchedCustomer.setContactNo(customer.getContactNo() == null ? fetchedCustomer.getContactNo() : customer.getContactNo());
         fetchedCustomer.setEmailId(customer.getEmailId() == null ? fetchedCustomer.getEmailId() : customer.getEmailId());
 
-        Customer updatedCustomer =customerRepository.save(fetchedCustomer);
-        return updatedCustomer;
+        redisTemplate.boundValueOps(id).set(fetchedCustomer);
+        log.info("updated Customer with id: {} in cache",id);
+        redisTemplate.boundSetOps(WRITE_BACK_CACHE_KEY).add(fetchedCustomer);
+        log.info("cache with key: {} is updated for id:{}",WRITE_BACK_CACHE_KEY,id );
+        return fetchedCustomer;
     }
 
     @Override
     public void deleteCustomerById(String id) {
-        Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
-        customerRepository.delete(fetchedCustomer);
+        final var customerOnCache = redisTemplate.boundValueOps(id).get();
+        if (customerOnCache != null) {
+            redisTemplate.boundSetOps(WRITE_BACK_CACHE_KEY).remove(customerOnCache);
+            redisTemplate.delete(id);
+            log.info("Customer removed with id: {} is removed from cache", id);
+        }
+        else
+            log.info("Customer with id:{} is not present in cache",id);
+        Customer fetchedCustomer = customerRepository.findById(id).orElse(null);
+        if(Objects.nonNull(fetchedCustomer))
+        {
+            customerRepository.delete(fetchedCustomer);
+            log.info("Customer with id:{} removed from DB",id);
+        }
+        else
+            log.info("Customer with id:{} is not present in db",id);
     }
     @Scheduled(fixedRateString = "${customer-service.cache.write-back-rate}")
     public void writeBack() {
@@ -127,8 +156,7 @@ public class CustomerServiceImpl implements CustomerService {
             while (cursor.hasNext()) {
                 final var customer = cursor.next();
                 customerRepository.save(customer);
-                log.info("Customer saved (customer={})", customer);
-
+                log.info("Customer saved in db ==> (customer={}) ", customer);
                 redisTemplate.boundSetOps(WRITE_BACK_CACHE_KEY).remove(customer);
                 log.info("Customer removed from {} set (customer={})", WRITE_BACK_CACHE_KEY, customer);
             }
