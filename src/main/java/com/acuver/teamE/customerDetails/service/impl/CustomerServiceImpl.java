@@ -4,6 +4,8 @@ import com.acuver.teamE.customerDetails.entity.Customer;
 import com.acuver.teamE.customerDetails.entity.response.CustomerResponse;
 import com.acuver.teamE.customerDetails.repository.CustomerRepository;
 import com.acuver.teamE.customerDetails.service.CustomerService;
+import org.redisson.api.RMapCache;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -15,10 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 
 @Service
@@ -28,10 +27,17 @@ public class CustomerServiceImpl implements CustomerService {
     @Autowired
     private CustomerRepository customerRepository;
 
+    @Autowired
+    private RedissonClient redissonClient;
+
+    @Autowired
+    private RMapCache<String, Customer> customerRMapCache;
+
     @Override
     public Customer saveCustomer(Customer customer) {
-        Customer newCustomer = customerRepository.save(customer);
-        return newCustomer;
+        customer.setId(UUID.randomUUID().toString());
+        customerRMapCache.put(customer.getId(), customer);
+        return customer;
     }
 
     @Override
@@ -62,10 +68,8 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    @Cacheable(key = "#id")
     public Customer getCustomerById(String id) {
-        Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
-        return fetchedCustomer;
+        return customerRMapCache.get(id);
     }
 
     @Override
@@ -102,9 +106,8 @@ public class CustomerServiceImpl implements CustomerService {
 
 
     @Override
-    @CachePut(key = "#id")
     public Customer updateCustomerById(Customer customer, String id) {
-        Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
+        Customer fetchedCustomer = customerRMapCache.get(id);
 
         fetchedCustomer.setFirstName(customer.getFirstName() == null ? fetchedCustomer.getFirstName() : customer.getFirstName());
         fetchedCustomer.setLastName(customer.getLastName() == null ? fetchedCustomer.getLastName() : customer.getLastName());
@@ -113,8 +116,8 @@ public class CustomerServiceImpl implements CustomerService {
         fetchedCustomer.setContactNo(customer.getContactNo() == null ? fetchedCustomer.getContactNo() : customer.getContactNo());
         fetchedCustomer.setEmailId(customer.getEmailId() == null ? fetchedCustomer.getEmailId() : customer.getEmailId());
 
-        Customer updatedCustomer =customerRepository.save(fetchedCustomer);
-        return updatedCustomer;
+        customerRMapCache.put(id, fetchedCustomer);
+        return fetchedCustomer;
     }
 
     @Override
