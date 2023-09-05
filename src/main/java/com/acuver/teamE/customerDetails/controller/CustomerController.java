@@ -59,6 +59,22 @@ public class CustomerController {
         }
     }
 
+    @GetMapping("/new")
+    public ResponseEntity<List<Customer>> getCustomersNew(
+            @RequestParam(required = false) Integer age,
+            @RequestParam(required = false) Integer minAge,
+            @RequestParam(required = false) Integer maxAge,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String gender){
+        List<Customer> customers = customerService.getCustomersNew(age, minAge, maxAge, email, gender);
+
+        if (customers == null){
+            return ResponseEntity.notFound().build();
+        }else {
+            return ResponseEntity.ok(customers);
+        }
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Customer> updateCustomerById(@Validated @RequestBody Customer customer, @PathVariable(name = "id") String id) {
         return ResponseEntity.ok(customerService.updateCustomerById(customer,id));

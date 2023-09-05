@@ -12,8 +12,7 @@ public interface CustomerService {
 
     Customer getCustomerById(String id);
     List<Customer> getCustomers(String id, Integer age, Integer minAge, Integer maxAge, String email, String gender);
-
-
+    List<Customer> getCustomersNew(Integer age, Integer minAge, Integer maxAge, String email, String gender);
     Customer updateCustomerById(Customer customer, String id);
 
     void deleteCustomerById(String id);
