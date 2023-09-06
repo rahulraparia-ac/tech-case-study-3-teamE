@@ -1,11 +1,16 @@
 package com.acuver.teamE.customerDetails.config;
 
 import com.acuver.teamE.customerDetails.entity.Customer;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import com.acuver.teamE.customerDetails.repository.CustomerRepository;
 import org.redisson.api.MapOptions;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
+import org.redisson.api.map.MapLoader;
 import org.redisson.api.map.MapWriter;
 import org.redisson.config.Config;
 import org.springframework.beans.factory.InitializingBean;
@@ -19,11 +24,16 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
-
+@Data
+@Getter
+@Setter
 @Configuration
+@Slf4j
 public class RedisConfig implements InitializingBean {
 
     private final String CACHE_NAME="Customer";
@@ -35,7 +45,8 @@ public class RedisConfig implements InitializingBean {
 
     @Bean
     public RMapCache<String, Customer> customerRMapCache() {
-        final RMapCache<String, Customer> customerRMapCache = redissonClient.getMapCache(CACHE_NAME, MapOptions.<String, Customer>defaults()
+        final RMapCache<String, Customer> customerRMapCache = this.redissonClient.getMapCache(CACHE_NAME, MapOptions.<String, Customer>defaults()
+                .loader(mapLoader)
                 .writer(getMapWriter())
                 .writeMode(MapOptions.WriteMode.WRITE_THROUGH));
         return customerRMapCache;
@@ -54,6 +65,7 @@ public class RedisConfig implements InitializingBean {
             public void write(final Map<String, Customer> map) {
                 map.forEach( (k, v) -> {
                     customerRepository.save(v);
+                    log.info("Customer saved in the Database from the Cache: "+v.getId());
                 });
             }
 
@@ -61,10 +73,27 @@ public class RedisConfig implements InitializingBean {
             public void delete(Collection<String> keys) {
                 keys.stream().forEach(e -> {
                     customerRepository.delete(customerRepository.findById(e).orElseThrow(() -> new NoSuchElementException("Resource Not Found")));
+                    log.info("Customer deleted from Database: "+e);
                 });
             }
         };
     }
+
+    MapLoader<String, Customer> mapLoader = new MapLoader<String, Customer>() {
+        @Override
+        public Iterable<String> loadAllKeys() {
+            List<String> result = customerRepository.findAll().stream().map(customer -> customer.getId()).collect(Collectors.toList());
+            log.info("List of Customer IDs fetched from DB by the Cache: "+result);
+            return result;
+        }
+
+        @Override
+        public Customer load(String key) {
+            Customer foundCustomer = customerRepository.findById(key).orElseThrow(() -> new NoSuchElementException("Resource not found"));
+            log.info("Customer ID found from DB by the Cache Client: "+foundCustomer.getId());
+            return foundCustomer;
+        }
+    };
 
 
     @Bean
@@ -78,7 +107,7 @@ public class RedisConfig implements InitializingBean {
     @Bean
     public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
         return (builder) -> builder
-                .withCacheConfiguration("keyValueCache",
+                .withCacheConfiguration("Customer",
                         RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofSeconds(300)));
     }
 

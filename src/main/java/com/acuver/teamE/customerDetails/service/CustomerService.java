@@ -11,8 +11,6 @@ public interface CustomerService {
     CustomerResponse getAllCustomers(int pageNo, int pageSize, String sortBy, String sortDir);
 
     Customer getCustomerById(String id);
-    List<Customer> getCustomers(String id, Integer age, Integer minAge, Integer maxAge, String email, String gender);
-
 
     Customer updateCustomerById(Customer customer, String id);
 
