@@ -77,26 +77,26 @@ public class CustomerServiceImpl implements CustomerService {
     public List<Customer> getCustomers(String id, Integer age, Integer minAge, Integer maxAge, String email, String gender) {
         List<Customer> fetchedCustomers = new ArrayList<>();
         if (id != null) {
-            System.out.println("fetching data from database for id: "+id);
+            log.info("fetching data from database for id: {}",id);
             Optional<Customer> customerOptional = customerRepository.findById(id);
             customerOptional.ifPresent(fetchedCustomers::add);
         } else if (age != null) {
-            System.out.println("fetching data from database for age: "+age);
+            log.info("fetching data from database for age: {}",age);
             fetchedCustomers = customerRepository.findByAge(age);
         } else if (minAge != null && maxAge != null) {
-            System.out.println("fetching data from database for age between a range of: "+minAge +"and"+maxAge);
+            log.info("fetching data from database for age between a range of: {} and {}",minAge,maxAge);
             fetchedCustomers = customerRepository.findByAgeBetween(minAge, maxAge);
         } else if (email != null) {
-            System.out.println("fetching data from database for email: "+email);
+            log.info("fetching data from database for email: {}",email);
             fetchedCustomers = customerRepository.findByEmailId(email);
         } else if (minAge != null) {
-            System.out.println("fetching data from database for age greater than: "+minAge);
+            log.info("fetching data from database for age greater than: {}",minAge);
             fetchedCustomers = customerRepository.findByAgeGreaterThan(minAge);
         } else if (maxAge != null) {
-            System.out.println("fetching data from database for age less than: "+maxAge);
+            log.info("fetching data from database for age less than: {}",maxAge);
             fetchedCustomers = customerRepository.findByAgeLessThan(maxAge);
         } else if (gender != null) {
-            System.out.println("fetching data from database for gender: "+gender);
+            log.info("fetching data from database for gender: {}",gender);
             fetchedCustomers = customerRepository.findByGender(gender);
         }
 
@@ -223,22 +223,22 @@ public class CustomerServiceImpl implements CustomerService {
     // Helper method to fetch data from the database based on criteria
     private List<Customer> fetchDataFromDatabase(Integer age, Integer minAge, Integer maxAge, String email, String gender) {
         if (age != null) {
-            log.info("fetching data from database for age: " + age);
+            log.info("fetching data from database for age: {} " , age);
             return customerRepository.findByAge(age);
         } else if (minAge != null && maxAge != null) {
-            log.info("fetching data from database for age between a range of: " + minAge + " and " + maxAge);
+            log.info("fetching data from database for age between a range of: {} and  {}", minAge, maxAge);
             return customerRepository.findByAgeBetween(minAge, maxAge);
         } else if (email != null) {
-            log.info("fetching data from database for email: " + email);
+            log.info("fetching data from database for email: {}", email);
             return customerRepository.findByEmailId(email);
         } else if (minAge != null) {
-            log.info("fetching data from database for age greater than: " + minAge);
+            log.info("fetching data from database for age greater than: {}" , minAge);
             return customerRepository.findByAgeGreaterThan(minAge);
         } else if (maxAge != null) {
-            log.info("fetching data from database for age less than: " + maxAge);
+            log.info("fetching data from database for age less than: {}", maxAge);
             return customerRepository.findByAgeLessThan(maxAge);
         } else if (gender != null) {
-            log.info("fetching data from database for gender: " + gender);
+            log.info("fetching data from database for gender: {}", gender);
             return customerRepository.findByGender(gender);
         } else {
             // If no criteria are specified, return an empty list or handle as needed
