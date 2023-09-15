@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -118,4 +119,37 @@ public class RedisConfig implements InitializingBean {
         this.redissonClient = Redisson.create(config);
     }
 
+    /**
+     * Handling multiple cache - customerCacheByName
+     *
+     *
+    @Bean
+    public RMapCache<String, Customer> customerNameRMapCache() {
+        final RMapCache<String, Customer> customerNameRMapCache = this.redissonClient.getMapCache("CustomerNameCache", MapOptions.<String, Customer>defaults()
+                .writer(getCustomerNameMapWriter())
+                .writeMode(MapOptions.WriteMode.WRITE_THROUGH));
+        return customerNameRMapCache;
+    }
+
+    private MapWriter<String, Customer> getCustomerNameMapWriter() {
+        return new MapWriter<String, Customer>() {
+            @Override
+            public void write(Map<String, Customer> map) {
+                map.forEach( (k, v) -> {
+                    customerRepository.save(v);
+                    log.info("Customer saved in the Database from the Cache: "+v.getFirstName());
+                });
+            }
+
+            @Override
+            public void delete(Collection<String> collection) {
+                collection.stream().forEach(e -> {
+                    customerRepository.delete(customerRepository.findByFirstName(e).orElseThrow(() -> new NoSuchElementException("Resource Not Found")));
+                    log.info("Customer deleted from Database: "+e);
+                });
+            }
+        };
+    }
+     **/
+    
 }
