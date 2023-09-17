@@ -2,6 +2,7 @@ package com.acuver.teamE.customerDetails.service.impl;
 
 import com.acuver.teamE.customerDetails.entity.Customer;
 import com.acuver.teamE.customerDetails.entity.response.CustomerResponse;
+import com.acuver.teamE.customerDetails.exception.ResourceNotFoundException;
 import com.acuver.teamE.customerDetails.repository.CustomerRepository;
 import com.acuver.teamE.customerDetails.service.CustomerService;
 import org.redisson.api.RMapCache;
@@ -14,7 +15,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
@@ -68,7 +68,7 @@ public class CustomerServiceImpl implements CustomerService {
     public Customer getCustomerById(String id) {
         Customer fetchedCustomer = customerRMapCache.get(id);
         if (fetchedCustomer == null)
-            throw new NoSuchElementException("Resource not found");
+            throw new ResourceNotFoundException("Customer","id",id);
         return fetchedCustomer;
     }
 
@@ -76,6 +76,8 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public Customer updateCustomerById(Customer customer, String id) {
         Customer fetchedCustomer = customerRMapCache.get(id);
+        if (fetchedCustomer == null)
+            throw new ResourceNotFoundException("Customer","id",id);
 
         fetchedCustomer.setFirstName(customer.getFirstName() == null ? fetchedCustomer.getFirstName() : customer.getFirstName());
         fetchedCustomer.setLastName(customer.getLastName() == null ? fetchedCustomer.getLastName() : customer.getLastName());
@@ -95,7 +97,7 @@ public class CustomerServiceImpl implements CustomerService {
         if (fetchedCustomer != null)
             customerRMapCache.remove(id);
         else
-            throw new NoSuchElementException("Resource not found");
+            throw new ResourceNotFoundException("Customer","id",id);
     }
 
 }

@@ -66,7 +66,7 @@ public class RedisConfig implements InitializingBean {
             public void write(final Map<String, Customer> map) {
                 map.forEach( (k, v) -> {
                     customerRepository.save(v);
-                    log.info("Customer saved in the Database from the Cache: "+v.getId());
+                    log.info("Customer saved to the Database through the Cache Client: "+v.getId());
                 });
             }
 
@@ -74,7 +74,7 @@ public class RedisConfig implements InitializingBean {
             public void delete(Collection<String> keys) {
                 keys.stream().forEach(e -> {
                     customerRepository.delete(customerRepository.findById(e).orElseThrow(() -> new NoSuchElementException("Resource Not Found")));
-                    log.info("Customer deleted from Database: "+e);
+                    log.info("Customer deleted from Database through the Cache Client: "+e);
                 });
             }
         };
@@ -84,14 +84,14 @@ public class RedisConfig implements InitializingBean {
         @Override
         public Iterable<String> loadAllKeys() {
             List<String> result = customerRepository.findAll().stream().map(customer -> customer.getId()).collect(Collectors.toList());
-            log.info("List of Customer IDs fetched from DB by the Cache: "+result);
+            log.info("List of Customer IDs fetched from Database by the Cache Client: "+result);
             return result;
         }
 
         @Override
         public Customer load(String key) {
             Customer foundCustomer = customerRepository.findById(key).orElseThrow(() -> new NoSuchElementException("Resource not found"));
-            log.info("Customer ID found from DB by the Cache Client: "+foundCustomer.getId());
+            log.info("Customer ID found from Database by the Cache Client: "+foundCustomer.getId());
             return foundCustomer;
         }
     };
