@@ -2,6 +2,7 @@ package com.acuver.teamE.customerDetails.service.impl;
 
 import com.acuver.teamE.customerDetails.entity.Customer;
 import com.acuver.teamE.customerDetails.entity.response.CustomerResponse;
+import com.acuver.teamE.customerDetails.exception.ResourceNotFoundException;
 import com.acuver.teamE.customerDetails.repository.CustomerRepository;
 import com.acuver.teamE.customerDetails.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,14 +62,14 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Cacheable(key = "#id")
     public Customer getCustomerById(String id) {
-        Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
+        Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Customer","id",id));
         return fetchedCustomer;
     }
 
     @Override
     @CachePut(key = "#id")
     public Customer updateCustomerById(Customer customer, String id) {
-        Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
+        Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Customer","id",id));
 
         fetchedCustomer.setFirstName(customer.getFirstName() == null ? fetchedCustomer.getFirstName() : customer.getFirstName());
         fetchedCustomer.setLastName(customer.getLastName() == null ? fetchedCustomer.getLastName() : customer.getLastName());
@@ -84,7 +85,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @CacheEvict(key = "#id")
     public void deleteCustomerById(String id) {
-        Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Resource not found"));
+        Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Customer","id",id));
         customerRepository.delete(fetchedCustomer);
     }
 
