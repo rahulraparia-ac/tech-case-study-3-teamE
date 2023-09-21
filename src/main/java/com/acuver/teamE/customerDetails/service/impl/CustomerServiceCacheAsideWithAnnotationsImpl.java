@@ -66,6 +66,16 @@ public class CustomerServiceCacheAsideWithAnnotationsImpl implements CustomerSer
     }
 
     @Override
+    public List<Customer> getCustomers(String id, Integer age, Integer minAge, Integer maxAge, String email, String gender) {
+        return null;
+    }
+
+    @Override
+    public List<Customer> getCustomersNew(Integer age, Integer minAge, Integer maxAge, String email, String gender) {
+        return null;
+    }
+
+    @Override
     @CachePut(key = "#id")
     public Customer updateCustomerById(Customer customer, String id) {
         Customer fetchedCustomer = customerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Customer","id",id));

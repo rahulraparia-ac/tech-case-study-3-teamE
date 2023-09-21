@@ -16,9 +16,6 @@ import org.springframework.web.bind.annotation.*;
 public class CustomerCacheAsideWithAnnotationsController {
 
     @Autowired
-    private CustomerService customerService;
-
-    @Autowired
     private CustomerServiceCacheAsideWithAnnotationsImpl serviceCacheAsideWithAnnotations;
 
     @PostMapping
