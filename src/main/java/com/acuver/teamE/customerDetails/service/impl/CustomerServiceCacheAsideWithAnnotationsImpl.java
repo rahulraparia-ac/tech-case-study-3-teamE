@@ -17,11 +17,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 @CacheConfig(cacheNames = {"Customer"})
-public class CustomerServiceImpl implements CustomerService {
+public class CustomerServiceCacheAsideWithAnnotationsImpl implements CustomerService {
 
     @Autowired
     private CustomerRepository customerRepository;
